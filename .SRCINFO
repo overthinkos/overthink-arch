@@ -1,0 +1,23 @@
+pkgbase = ov-git
+	pkgdesc = Overthink container management CLI — compose, build, deploy container images from configurable layers
+	pkgver = r1.0000000
+	pkgrel = 1
+	url = https://github.com/overthinkos/overthink
+	arch = x86_64
+	license = MIT
+	makedepends = go
+	makedepends = git
+	depends = glibc
+	optdepends = docker: container engine for building and running images
+	optdepends = podman: alternative container engine (rootless support)
+	optdepends = libsecret: system keyring credential storage
+	optdepends = gocryptfs: encrypted bind mount support (ov enc)
+	optdepends = tailscale: tunnel support for deployed services
+	optdepends = qemu-full: VM backend support (ov vm)
+	optdepends = libvirt: libvirt VM backend (ov vm)
+	provides = ov
+	conflicts = ov
+	source = ov-git::git+https://github.com/overthinkos/overthink.git
+	sha256sums = SKIP
+
+pkgname = ov-git

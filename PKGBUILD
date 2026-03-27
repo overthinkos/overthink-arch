@@ -13,9 +13,14 @@ optdepends=(
     'podman: alternative container engine (rootless support)'
     'libsecret: system keyring credential storage'
     'gocryptfs: encrypted bind mount support (ov enc)'
-    'tailscale: tunnel support for deployed services'
+    'fuse3: fusermount3 required by gocryptfs'
+    'openssh: SSH transport for ov vm ssh'
+    'skopeo: multi-platform manifest merging (ov merge)'
     'qemu-full: VM backend support (ov vm)'
+    'qemu-img: disk image creation (ov vm build)'
+    'virtiofsd: VM filesystem sharing'
     'libvirt: libvirt VM backend (ov vm)'
+    'tailscale: tunnel support for deployed services'
 )
 provides=('ov')
 conflicts=('ov')

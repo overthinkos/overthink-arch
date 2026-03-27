@@ -1,0 +1,8 @@
+# Build artifacts
+*.pkg.tar.zst
+*.pkg.tar.xz
+*.pkg.tar.gz
+*.log
+ov-git/
+pkg/
+src/

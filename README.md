@@ -33,7 +33,7 @@ All runtime dependencies are optional — `ov` gracefully degrades when they are
 |---------|---------|
 | `docker` or `podman` | Container engine for building and running images |
 | `libsecret` | System keyring for credential storage (GNOME/KDE Wallet) |
-| `gocryptfs` | Encrypted bind mount support (`ov enc`) |
+| `gocryptfs` | Encrypted volume support (`ov config mount/unmount`) |
 | `tailscale` | Tunnel support for deployed services |
 | `qemu-full` | VM backend support (`ov vm`) |
 | `libvirt` | libvirt VM backend (`ov vm`) |

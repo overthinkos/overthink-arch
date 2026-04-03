@@ -1,26 +1,28 @@
 # Maintainer: Andreas Trawoeger <atrawog@overthink.net>
 pkgname=ov-git
-pkgver=2026.88.1704
+pkgver=2026.93.200
 pkgrel=1
 pkgdesc="Overthink container management CLI — compose, build, deploy container images from configurable layers"
 arch=('x86_64')
 url="https://github.com/overthinkos/overthink"
 license=('MIT')
-depends=('glibc')
+depends=(
+    'glibc'
+    'podman'
+    'libsecret'
+    'gocryptfs'
+    'fuse3'
+    'openssh'
+    'skopeo'
+    'qemu-full'
+    'qemu-img'
+    'virtiofsd'
+    'libvirt'
+    'tailscale'
+)
 makedepends=('go' 'git')
 optdepends=(
-    'docker: container engine for building and running images'
-    'podman: alternative container engine (rootless support)'
-    'libsecret: system keyring credential storage'
-    'gocryptfs: encrypted bind mount support (ov enc)'
-    'fuse3: fusermount3 required by gocryptfs'
-    'openssh: SSH transport for ov vm ssh'
-    'skopeo: multi-platform manifest merging (ov merge)'
-    'qemu-full: VM backend support (ov vm)'
-    'qemu-img: disk image creation (ov vm build)'
-    'virtiofsd: VM filesystem sharing'
-    'libvirt: libvirt VM backend (ov vm)'
-    'tailscale: tunnel support for deployed services'
+    'docker: alternative container engine'
 )
 provides=('ov')
 conflicts=('ov')

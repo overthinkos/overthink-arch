@@ -1,6 +1,6 @@
 # Maintainer: Andreas Trawoeger <atrawog@overthink.net>
 pkgname=ov-git
-pkgver=2026.108.526
+pkgver=2026.109.910
 pkgrel=1
 pkgdesc="Overthink container management CLI — compose, build, deploy container images from configurable layers"
 arch=('x86_64')

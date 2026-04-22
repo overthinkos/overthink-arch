@@ -25,8 +25,18 @@ depends=(
     'dnsmasq'        # libvirt default-network NAT (when vm uses mode: nat)
     'swtpm'          # software TPM 2.0 (when libvirt.devices.tpm uses backend: emulator)
     'dmidecode'      # SMBIOS inspection inside guests (debugging key-injection)
+    # --- SPICE client support (`ov test spice`, Shells-com/spice library) ---
+    # Shells-com/spice's playback/record channels use cgo bindings to
+    # portaudio + opusfile. Both are required at link time AND runtime.
+    # opusfile pulls libogg + openssl + opus transitively.
+    'portaudio'      # gordonklaus/portaudio → libportaudio (audio I/O)
+    'opusfile'      # hraban/opus → libopusfile + libopus (Opus audio codec)
 )
-makedepends=('go' 'git')
+makedepends=(
+    'go'
+    'git'
+    'pkgconf'        # cgo pkg-config lookup for portaudio + opus during compile
+)
 optdepends=(
     'docker: alternative container engine'
 )
@@ -64,7 +74,10 @@ build() {
     # Standalone/AUR: build from git source
     cd "${srcdir}/${pkgname}/ov"
     export GOPATH="${srcdir}/gopath"
-    export CGO_ENABLED=0
+    # cgo required by Shells-com/spice audio channels (portaudio + opus).
+    # The rest of ov is pure Go; we cannot CGO_ENABLED=0 anymore because
+    # the spice import transitively pulls portaudio/opus cgo bindings.
+    export CGO_ENABLED=1
     go build -trimpath -mod=readonly -o "${srcdir}/ov" .
 }
 

@@ -19,6 +19,12 @@ depends=(
     'virtiofsd'
     'libvirt'
     'tailscale'
+    # --- VM cloud-image support (kind: vm entity; D2/D15/D17) ---
+    'libisoburn'     # xorriso — NoCloud cidata seed ISO builder
+    'edk2-ovmf'      # OVMF_CODE + OVMF_VARS for UEFI guests
+    'dnsmasq'        # libvirt default-network NAT (when vm uses mode: nat)
+    'swtpm'          # software TPM 2.0 (when libvirt.devices.tpm uses backend: emulator)
+    'dmidecode'      # SMBIOS inspection inside guests (debugging key-injection)
 )
 makedepends=('go' 'git')
 optdepends=(

@@ -30,7 +30,14 @@ depends=(
     # portaudio + opusfile. Both are required at link time AND runtime.
     # opusfile pulls libogg + openssl + opus transitively.
     'portaudio'      # gordonklaus/portaudio → libportaudio (audio I/O)
-    'opusfile'      # hraban/opus → libopusfile + libopus (Opus audio codec)
+    'opusfile'       # hraban/opus → libopusfile + libopus (Opus audio codec)
+    # --- Remote-GUI access to VMs with <listen type='socket'/> SPICE ---
+    # virt-viewer / virt-manager's auto SSH tunnel for UNIX-socket
+    # SPICE listeners works by spawning `ssh host nc -U <socket>` on
+    # the libvirt host. Without `nc` (openbsd-netcat), remote
+    # `virt-manager --connect qemu+ssh://host/session` silently fails
+    # to open the console.
+    'openbsd-netcat'
 )
 makedepends=(
     'go'

@@ -1,6 +1,6 @@
 # Maintainer: Andreas Trawoeger <atrawog@overthink.net>
 pkgname=ov-git
-pkgver=2026.121.1131
+pkgver=2026.122.1536
 pkgrel=1
 pkgdesc="Overthink container management CLI — compose, build, deploy container images from configurable layers"
 arch=('x86_64')
@@ -19,12 +19,25 @@ depends=(
     'virtiofsd'
     'libvirt'
     'tailscale'
+    # --- Rootless podman runtime support ---
+    # podman declares these as optdepends, but every realistic ov
+    # workflow runs rootless and BREAKS without them. Promoting to
+    # hard depends so a fresh install Just Works.
+    'fuse-overlayfs' # rootless container storage driver
+    'slirp4netns'    # rootless container networking
     # --- VM cloud-image support (kind: vm entity; D2/D15/D17) ---
     'libisoburn'     # xorriso — NoCloud cidata seed ISO builder
+    'cdrtools'       # genisoimage fallback for the seed ISO builder (cloud_init_iso.go probes xorriso → genisoimage → mkisofs)
     'edk2-ovmf'      # OVMF_CODE + OVMF_VARS for UEFI guests
     'dnsmasq'        # libvirt default-network NAT (when vm uses mode: nat)
     'swtpm'          # software TPM 2.0 (when libvirt.devices.tpm uses backend: emulator)
     'dmidecode'      # SMBIOS inspection inside guests (debugging key-injection)
+    # --- Credential surface (ov secrets, KeePass + secret-tool path) ---
+    # GnuPG is the kdbx unlock and gpg-preset-passphrase fallback;
+    # pinentry (bundled package; provides pinentry-qt + pinentry-curses
+    # + pinentry-tty etc.) is the prompt agent secrets_gpg.go probes for.
+    'gnupg'
+    'pinentry'
     # --- SPICE client support (`ov test spice`, Shells-com/spice library) ---
     # Shells-com/spice's playback/record channels use cgo bindings to
     # portaudio + opusfile. Both are required at link time AND runtime.

@@ -43,7 +43,7 @@ depends=(
     # + pinentry-tty etc.) is the prompt agent secrets_gpg.go probes for.
     'gnupg'
     'pinentry'
-    # --- SPICE client support (`ov test spice`, Shells-com/spice library) ---
+    # --- SPICE client support (`ov eval spice`, Shells-com/spice library) ---
     # Shells-com/spice's playback/record channels use cgo bindings to
     # portaudio + opusfile. Both are required at link time AND runtime.
     # opusfile pulls libogg + openssl + opus transitively.

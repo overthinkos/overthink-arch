@@ -1,24 +1,29 @@
 # Maintainer: Andreas Trawoeger <atrawog@overthink.net>
 pkgname=ov-git
-pkgver=2026.122.1536
+pkgver=2026.125.617
 pkgrel=1
 pkgdesc="Overthink container management CLI — compose, build, deploy container images from configurable layers"
 arch=('x86_64')
 url="https://github.com/overthinkos/overthink"
 license=('MIT')
+install=ov-git.install
 depends=(
     'glibc'
     'podman'
+    'docker'         # alternative container engine; coexists with podman
     'libsecret'
     'gocryptfs'
     'fuse3'
     'openssh'
+    'util-linux'     # standard userland (mount, lsblk, etc.) — explicit per ov-cachyos baseline
     'skopeo'
     'qemu-full'
     'qemu-img'
     'virtiofsd'
     'libvirt'
     'tailscale'
+    # --- Build tool (canonical user-facing build flow `task build:ov`) ---
+    'go-task'        # provides /usr/bin/task — required by `task build:ov` and other dev workflows from a checkout
     # --- Rootless podman runtime support ---
     # podman declares these as optdepends, but every realistic ov
     # workflow runs rootless and BREAKS without them. Promoting to
@@ -51,14 +56,21 @@ depends=(
     # `virt-manager --connect qemu+ssh://host/session` silently fails
     # to open the console.
     'openbsd-netcat'
+    # --- AUR-only mandatory deps (require yay/paru/AUR helper to install) ---
+    # Bare `makepkg -si` cannot resolve these; use `yay -S ov-git` /
+    # `yay -S cloudflared-bin gvisor-tap-vsock` first, or rely on the
+    # taskfiles/Build.yml `install` task which pre-installs them via yay
+    # before invoking makepkg. NEVER use `yay -B`/`yay -Bi` against the
+    # local checkout — that mode runs `git pull` against the pkg/arch
+    # subrepo and can reset uncommitted edits in the working tree.
+    'cloudflared-bin'  # Cloudflare tunnels (AUR)
+    'gvisor-tap-vsock' # podman machine networking (AUR; provides /usr/lib/podman/gvproxy)
 )
 makedepends=(
     'go'
     'git'
     'pkgconf'        # cgo pkg-config lookup for portaudio + opus during compile
-)
-optdepends=(
-    'docker: alternative container engine'
+    'curl'           # used by `task install`'s portable-fallback path on non-Arch
 )
 provides=('ov')
 conflicts=('ov')

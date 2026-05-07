@@ -1,12 +1,12 @@
 # Maintainer: Andreas Trawoeger <atrawog@overthink.net>
-pkgname=ov-git
-pkgver=2026.125.822
+pkgname=overthink-git
+pkgver=2026.127.2239
 pkgrel=1
 pkgdesc="Overthink container management CLI — compose, build, deploy container images from configurable layers"
 arch=('x86_64')
 url="https://github.com/overthinkos/overthink"
 license=('MIT')
-install=ov-git.install
+install=overthink-git.install
 depends=(
     'glibc'
     'podman'
@@ -57,7 +57,7 @@ depends=(
     # to open the console.
     'openbsd-netcat'
     # --- AUR-only mandatory deps (require yay/paru/AUR helper to install) ---
-    # Bare `makepkg -si` cannot resolve these; use `yay -S ov-git` /
+    # Bare `makepkg -si` cannot resolve these; use `yay -S overthink-git` /
     # `yay -S cloudflared-bin gvisor-tap-vsock` first, or rely on the
     # taskfiles/Build.yml `install` task which pre-installs them via yay
     # before invoking makepkg. NEVER use `yay -B`/`yay -Bi` against the
@@ -73,7 +73,8 @@ makedepends=(
     'curl'           # used by `task install`'s portable-fallback path on non-Arch
 )
 provides=('ov')
-conflicts=('ov')
+conflicts=('ov' 'ov-git')
+replaces=('ov-git')
 source=("${pkgname}::git+file://$(realpath "${startdir}/../..")")
 sha256sums=('SKIP')
 

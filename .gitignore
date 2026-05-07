@@ -3,7 +3,7 @@
 *.pkg.tar.xz
 *.pkg.tar.gz
 *.log
-ov-git/
+overthink-git/
 pkg/
 src/
 

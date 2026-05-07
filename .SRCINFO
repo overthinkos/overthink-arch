@@ -1,9 +1,9 @@
-pkgbase = ov-git
+pkgbase = overthink-git
 	pkgdesc = Overthink container management CLI — compose, build, deploy container images from configurable layers
-	pkgver = 2026.122.1536
+	pkgver = 2026.127.1724
 	pkgrel = 1
 	url = https://github.com/overthinkos/overthink
-	install = ov-git.install
+	install = overthink-git.install
 	arch = x86_64
 	license = MIT
 	makedepends = go
@@ -42,7 +42,9 @@ pkgbase = ov-git
 	depends = gvisor-tap-vsock
 	provides = ov
 	conflicts = ov
-	source = ov-git::git+file:///home/atrawog/Atrapub/overthink
+	conflicts = ov-git
+	replaces = ov-git
+	source = overthink-git::git+file:///home/atrawog/Atrapub/overthink
 	sha256sums = SKIP
 
-pkgname = ov-git
+pkgname = overthink-git

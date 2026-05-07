@@ -26,7 +26,7 @@ post_install() {
         echo ">>> NOTE: run 'sudo usermod -aG docker,libvirt \$USER' to enable rootless container/libvirt access."
     fi
 
-    echo ">>> ov-git installed. Run 'ov doctor' to verify all subsystems."
+    echo ">>> overthink-git installed. Run 'ov doctor' to verify all subsystems."
 }
 
 post_upgrade() {

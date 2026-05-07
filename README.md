@@ -7,7 +7,7 @@ Arch Linux packaging for [overthink](https://github.com/overthinkos/overthink) â
 ### Via yay (from AUR)
 
 ```bash
-yay -S ov-git
+yay -S overthink-git
 ```
 
 ### Directly from this repo
@@ -40,8 +40,8 @@ All runtime dependencies are optional â€” `ov` gracefully degrades when they are
 
 ## Versioning
 
-The package version mirrors the `ov version` CalVer format (`YYYY.DDD.HHMM`) derived from the last commit date. Running `ov version` after install will print the same version that pacman shows in `pacman -Q ov-git`.
+The package version mirrors the `ov version` CalVer format (`YYYY.DDD.HHMM`) derived from the last commit date. Running `ov version` after install will print the same version that pacman shows in `pacman -Q overthink-git`.
 
 ## AUR
 
-This package is maintained in the [overthinkos/overthink-arch](https://github.com/overthinkos/overthink-arch) repository and mirrored to the AUR as [`ov-git`](https://aur.archlinux.org/packages/ov-git).
+This package is maintained in the [overthinkos/overthink-arch](https://github.com/overthinkos/overthink-arch) repository and mirrored to the AUR as [`overthink-git`](https://aur.archlinux.org/packages/overthink-git).

@@ -66,6 +66,21 @@ depends=(
     'cloudflared-bin'  # Cloudflare tunnels (AUR)
     'gvisor-tap-vsock' # podman machine networking (AUR; provides /usr/lib/podman/gvproxy)
 )
+optdepends=(
+    # --- Remote/physical kind:android device support (`target: android` onto
+    # an `adb:` endpoint device) ---
+    # The in-pod emulator path needs NEITHER of these on the host: apkeep is
+    # baked into the android-emulator image and adb runs in-pod (the host
+    # speaks the adb wire protocol via goadb). Only a REMOTE/physical device
+    # addressed by `kind: android adb: {host: …}` runs apkeep + adb on the
+    # HOST. `android-tools` ships the host `adb` (for the `package:` download
+    # path's `adb -H -P` install). apkeep has no buildable Arch package (its
+    # AUR Rust build fails to link ring/zstd-sys under lld); install it from
+    # the upstream precompiled binary on the host when you need the
+    # remote-device `package:` (apkeep-download) path — the committed-APK
+    # endpoint path (`apk: <file>`) needs neither (pure goadb push).
+    'android-tools: host adb for the remote `target: android` package-download install path'
+)
 makedepends=(
     'go'
     'git'

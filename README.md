@@ -4,19 +4,18 @@ Arch Linux packaging for [overthink](https://github.com/overthinkos/overthink) �
 
 ## Install
 
-### Via yay (from AUR)
+`overthink-git` is LOCAL-ONLY — it is NOT published to the AUR, so there is no
+`yay -S overthink-git`. Build it from this PKGBUILD directly:
 
 ```bash
-yay -S overthink-git
-```
-
-### Directly from this repo
-
-```bash
-git clone https://github.com/overthinkos/overthink-arch.git
-cd overthink-arch
 makepkg -si
 ```
+
+`makepkg -si` resolves the AUR-only mandatory deps (`cloudflared-bin`,
+`gvisor-tap-vsock`) via an AUR helper, or pre-install them first — see the
+`makedepends`/AUR notes in the PKGBUILD. From a full overthink checkout, the
+equivalent one-liner is `cd pkg/arch && makepkg -si` (or `task build:ov` from
+the repo root, which runs the same `makepkg -sefi`).
 
 ## Verify
 

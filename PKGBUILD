@@ -1,6 +1,6 @@
 # Maintainer: Andreas Trawoeger <atrawog@overthink.net>
 pkgname=overthink-git
-pkgver=2026.154.1813
+pkgver=2026.154.1920
 pkgrel=1
 pkgdesc="Overthink container management CLI — compose, build, deploy container images from configurable layers"
 arch=('x86_64')
@@ -42,10 +42,11 @@ depends=(
     'gnupg'
     'pinentry'
     # --- AUR-only mandatory deps (require yay/paru/AUR helper to install) ---
-    # Bare `makepkg -si` cannot resolve these; use `yay -S overthink-git` /
-    # `yay -S cloudflared-bin gvisor-tap-vsock` first, or rely on the
-    # taskfiles/Build.yml `install` task which pre-installs them via yay
-    # before invoking makepkg. NEVER use `yay -B`/`yay -Bi` against the
+    # overthink-git itself is LOCAL-ONLY (not on the AUR), so these AUR DEPS
+    # can't ride in on a `yay -S overthink-git`. Bare `makepkg -si` cannot
+    # resolve them either; `yay -S cloudflared-bin gvisor-tap-vsock` first, or
+    # rely on the taskfiles/Build.yml `install` task which pre-installs them via
+    # yay before invoking makepkg. NEVER use `yay -B`/`yay -Bi` against the
     # local checkout — that mode runs `git pull` against the pkg/arch
     # subrepo and can reset uncommitted edits in the working tree.
     'cloudflared-bin'  # Cloudflare tunnels (AUR)

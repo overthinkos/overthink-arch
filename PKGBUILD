@@ -1,6 +1,6 @@
 # Maintainer: Andreas Trawoeger <atrawog@overthink.net>
 pkgname=overthink-git
-pkgver=2026.154.1212
+pkgver=2026.154.1813
 pkgrel=1
 pkgdesc="Overthink container management CLI — compose, build, deploy container images from configurable layers"
 arch=('x86_64')
@@ -91,13 +91,24 @@ source=("${pkgname}::git+file://$(realpath "${startdir}/../..")")
 sha256sums=('SKIP')
 
 pkgver() {
-    # Single source of truth for the CalVer (commit-date when clean) — the SAME
-    # value baked into the binary's `ov version` via the build() ldflag below.
+    # The package ships exactly ONE ov binary, so its OWN `ov version` IS the
+    # package version — read it directly and pacman's pkgver can NEVER disagree
+    # with the installed binary's identity (a parallel re-derivation can: running
+    # ov_calver from srcdir/ resolves git to the pkg/arch SUBMODULE, a different
+    # commit than the superproject where the ov source lives).
+    #
+    # Local dev (`task build:ov`) hands us a pre-built, already-stamped bin/ov —
+    # the same binary build() installs below; its stamp is the pkgver by
+    # construction. AUR/standalone has no bin/ov and builds from the cloned ov
+    # source, where ov_calver derives the same commit-date CalVer build()'s ldflag
+    # will bake — so pkgver == `ov version` there too.
+    if [[ -x "${startdir}/../../bin/ov" ]]; then
+        "${startdir}/../../bin/ov" version 2>/dev/null
+        return
+    fi
     # shellcheck source=calver.sh
     source "${startdir}/calver.sh"
-    if [[ -d "${srcdir}/${pkgname}/.git" ]]; then
-        cd "${srcdir}/${pkgname}"
-    fi
+    cd "${srcdir}/${pkgname}"
     ov_calver
 }
 

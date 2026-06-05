@@ -8,9 +8,12 @@ url="https://github.com/overthinkos/overthink"
 license=('MIT')
 install=overthink-git.install
 depends=(
+    # POLICY: every tool ov invokes that lives in the cachyos/arch REPOS is a
+    # mandatory dep here (a fresh `pacman -S overthink-git` Just Works), with the
+    # sole exceptions carved out to optdepends below: Docker (alternative engine),
+    # the AUR-only tools, and the GPU/k8s situational tools (nvidia-utils, kubectl).
     'glibc'
     'podman'
-    'docker'         # alternative container engine; coexists with podman
     'gocryptfs'
     'fuse3'
     'openssh'
@@ -21,6 +24,8 @@ depends=(
     'virtiofsd'
     'libvirt'
     'tailscale'
+    'libarchive'     # bsdtar — reads .PKGINFO from a built .pkg.tar.zst in the localpkg dependency resolver (localpkg.go)
+    'iproute2'       # ss — CDP/port readiness probes (cdp.go)
     # --- Rootless podman runtime support ---
     # podman declares these as optdepends, but every realistic ov
     # workflow runs rootless and BREAKS without them. Promoting to
@@ -41,18 +46,19 @@ depends=(
     # pinentry-qt/curses/tty) is the prompt agent secrets_gpg.go probes for.
     'gnupg'
     'pinentry'
-    # --- AUR-only mandatory deps (require yay/paru/AUR helper to install) ---
-    # overthink-git itself is LOCAL-ONLY (not on the AUR), so these AUR DEPS
-    # can't ride in on a `yay -S overthink-git`. Bare `makepkg -si` cannot
-    # resolve them either; `yay -S cloudflared-bin gvisor-tap-vsock` first, or
-    # rely on the taskfiles/Build.yml `install` task which pre-installs them via
-    # yay before invoking makepkg. NEVER use `yay -B`/`yay -Bi` against the
-    # local checkout — that mode runs `git pull` against the pkg/arch
-    # subrepo and can reset uncommitted edits in the working tree.
-    'cloudflared-bin'  # Cloudflare tunnels (AUR)
-    'gvisor-tap-vsock' # podman machine networking (AUR; provides /usr/lib/podman/gvproxy)
 )
 optdepends=(
+    # --- Container engine alternative (podman is the mandatory default) ---
+    'docker: alternative container engine — only needed for engine.run=docker (podman is the default)'
+    # --- AUR-only integrations (NOT in the cachyos/arch repos; install via an AUR helper when the feature is used) ---
+    # overthink-git is LOCAL-ONLY, so these can't ride in on a `yay -S overthink-git`;
+    # `yay -S cloudflared-bin gvisor-tap-vsock` when you need tunnels / podman-machine networking.
+    'cloudflared-bin: Cloudflare tunnels (AUR)'
+    'gvisor-tap-vsock: podman-machine networking — provides /usr/lib/podman/gvproxy (AUR)'
+    # --- GPU passthrough (repo-available, but only used when a kind:vm passes a GPU or a deploy generates CDI) ---
+    'nvidia-utils: nvidia-smi GPU detection + nvidia-ctk CDI generation (GPU targets only)'
+    # --- Kubernetes (repo-available, but only used for kind:k8s targets) ---
+    'kubectl: Kubernetes deploys + ov eval k8s probes (kind:k8s targets only)'
     # --- Remote/physical kind:android device support (`target: android` onto
     # an `adb:` endpoint device) ---
     # The in-pod emulator path needs NEITHER of these on the host: apkeep is

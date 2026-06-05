@@ -1,8 +1,8 @@
 # Maintainer: Andreas Trawoeger <atrawog@overthink.net>
 pkgname=overthink-git
-pkgver=2026.155.41
+pkgver=2026.156.453
 pkgrel=1
-pkgdesc="Overthink container management CLI — compose, build, deploy container images from configurable layers"
+pkgdesc="Overthink container management CLI — compose, build, deploy container boxes from configurable candies"
 arch=('x86_64')
 url="https://github.com/overthinkos/overthink"
 license=('MIT')

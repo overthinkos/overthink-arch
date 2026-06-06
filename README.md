@@ -1,6 +1,6 @@
 # overthink-arch
 
-Arch Linux packaging for [overthink](https://github.com/overthinkos/overthink) — the container management CLI (`ov`).
+Arch Linux packaging for [overthink](https://github.com/overthinkos/overthink) — the candy-factory container CLI (`ov`).
 
 ## Install
 

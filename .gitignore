@@ -3,7 +3,7 @@
 *.pkg.tar.xz
 *.pkg.tar.gz
 *.log
-overthink-git/
+opencharly-git/
 pkg/
 src/
 

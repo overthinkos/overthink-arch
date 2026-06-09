@@ -1,6 +1,6 @@
 pkgbase = opencharly-git
 	pkgdesc = OpenCharly container management CLI — compose, build, deploy container boxes from configurable candies
-	pkgver = 2026.156.453
+	pkgver = 2026.159.1559
 	pkgrel = 1
 	url = https://github.com/overthinkos/overthink
 	install = opencharly-git.install
@@ -49,7 +49,7 @@ pkgbase = opencharly-git
 	conflicts = ov-git
 	replaces = overthink-git
 	replaces = ov-git
-	source = opencharly-git::git+file:///home/atrawog/Atrapub/oc-overthink
+	source = opencharly-git::git+file:///home/atrawog/Sync/Atrapub/av-overthink
 	sha256sums = SKIP
 
 pkgname = opencharly-git

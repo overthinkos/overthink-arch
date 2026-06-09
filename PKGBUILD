@@ -1,6 +1,6 @@
-# Maintainer: Andreas Trawoeger <atrawog@overthink.net>
+# Maintainer: Andreas Trawoeger <atrawog@opencharly.net>
 pkgname=opencharly-git
-pkgver=2026.159.325
+pkgver=2026.159.1559
 pkgrel=1
 pkgdesc="OpenCharly container management CLI — compose, build, deploy container boxes from configurable candies"
 arch=('x86_64')
@@ -17,7 +17,7 @@ depends=(
     'gocryptfs'
     'fuse3'
     'openssh'
-    'util-linux'     # standard userland (mount, lsblk, etc.) — explicit per ov-cachyos baseline
+    'util-linux'     # standard userland (mount, lsblk, etc.) — explicit per charly-cachyos baseline
     'skopeo'
     'qemu-full'
     'qemu-img'

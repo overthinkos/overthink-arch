@@ -1,4 +1,4 @@
-# overthink-arch
+# opencharly-arch
 
 Arch Linux packaging for [opencharly](https://github.com/overthinkos/overthink) — the candy-factory container CLI (`charly`).
 

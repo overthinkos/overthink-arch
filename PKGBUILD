@@ -1,4 +1,4 @@
-# Maintainer: Andreas Trawoeger <atrawog@opencharly.net>
+# Maintainer: Andreas Trawoeger <atrawog@opencharly.ai>
 pkgname=opencharly-git
 pkgver=2026.159.1559
 pkgrel=1

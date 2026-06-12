@@ -1,6 +1,6 @@
 # Maintainer: Andreas Trawoeger <atrawog@opencharly.ai>
 pkgname=opencharly-git
-pkgver=2026.163.739
+pkgver=2026.163.0758
 pkgrel=1
 pkgdesc="OpenCharly container management CLI — compose, build, deploy container boxes from configurable candies"
 arch=('x86_64')

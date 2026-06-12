@@ -14,8 +14,10 @@
 # identifies the MOMENT of a build, not its SOURCE, and that conflation is what
 # makes two builds of one commit disagree (e.g. `pacman` pkgver vs `charly version`)
 # and lets a stale binary falsely sort "newer" than a fresh one. The format
-# matches ComputeCalVerAt() in charly/version.go exactly: DDD = day-of-year with no
-# leading zeros, HHMM = hour*100 + minute, all UTC.
+# matches ComputeCalVerAt() in charly/version.go exactly — CANONICAL fixed-width:
+# YYYY = 4-digit year, DDD = 3-digit zero-padded day-of-year, HHMM = 4-digit
+# zero-padded hour*100 + minute, all UTC. Fixed-width so a plain alphanumeric
+# sort of CalVer strings is chronological.
 charly_calver() {
 	local y d h m
 	if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -25,7 +27,7 @@ charly_calver() {
 	# HEAD commit's UTC timestamp — identical for a clean tree and a dirty tree at
 	# the same commit, so the stamp identifies the SOURCE, never the build moment.
 	read -r y d h m <<<"$(TZ=UTC0 git log -1 --format=%cd --date='format-local:%Y %j %H %M')"
-	printf '%d.%d.%d\n' "$((10#$y))" "$((10#$d))" "$(((10#$h) * 100 + (10#$m)))"
+	printf '%04d.%03d.%04d\n' "$((10#$y))" "$((10#$d))" "$(((10#$h) * 100 + (10#$m)))"
 }
 
 # Direct execution (`bash calver.sh`) prints the value — convenient for the

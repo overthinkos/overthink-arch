@@ -72,14 +72,13 @@ optdepends=(
     # remote-device `package:` (apkeep-download) path — the committed-APK
     # endpoint path (`apk: <file>`) needs neither (pure goadb push).
     'android-tools: host adb for the remote `target: android` package-download install path'
-    # --- SPICE audio (opt-in; build charly with `-tags spice_audio`) ---
-    # charly embeds Shells-com/spice for the framebuffer/input/cursor/clipboard
-    # channels ONLY and never uses audio; its playback/record channels (the
-    # sole opus/portaudio cgo consumers) are build-tagged OFF by default, so a
-    # plain charly links no audio libs and runs anywhere. Install these AND build
-    # charly with `-tags spice_audio` to enable SPICE audio.
-    'opusfile: SPICE audio codec, for a charly built with -tags spice_audio'
-    'portaudio: SPICE audio I/O, for a charly built with -tags spice_audio'
+    # --- SPICE audio: NOT a core dep ---
+    # The core charly is cgo-free for audio — it carries no SPICE library at
+    # all. The `spice:` check verb and its Shells-com/spice client (the sole
+    # opus/portaudio cgo consumers, gated behind `-tags spice_audio`) live in
+    # the out-of-tree `candy/plugin-spice`. portaudio/opusfile are therefore
+    # deps of that OPTIONAL plugin's spice_audio build, never of this package —
+    # so they are intentionally absent here.
     # --- Optional credential / debug / dev / remote-GUI tools (charly runs without them) ---
     'libsecret: secret-tool CLI + pinentry-qt Secret Service passphrase auto-retrieval; charly itself uses the pure-Go go-keyring D-Bus client'
     'dmidecode: SMBIOS inspection inside guests when debugging VM key-injection'
@@ -137,11 +136,11 @@ build() {
     calver=$(cd "${srcdir}/${pkgname}" && charly_calver)
     cd "${srcdir}/${pkgname}/charly"
     export GOPATH="${srcdir}/gopath"
-    # The only cgo in charly was the Shells-com/spice audio channels (portaudio +
-    # opus); they are now gated behind the `spice_audio` build tag (default
-    # OFF), so this plain build links no audio libs and runs on any glibc
-    # system. CGO stays enabled for the Go stdlib (net/os); build charly with
-    # `-tags spice_audio` (and opusfile + portaudio installed) for SPICE audio.
+    # The core charly carries no SPICE audio code: the Shells-com/spice client
+    # and its opus/portaudio cgo channels were dep-shed out of core into the
+    # out-of-tree `candy/plugin-spice` (gated behind `-tags spice_audio` THERE).
+    # So this core build links no audio libs and runs on any glibc system. CGO
+    # stays enabled only for the Go stdlib (net/os).
     export CGO_ENABLED=1
     go build -trimpath -mod=readonly -ldflags "-X main.BuildCalVer=${calver}" -o "${srcdir}/charly" .
 }

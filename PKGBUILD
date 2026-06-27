@@ -39,11 +39,14 @@ depends=(
     'dnsmasq'        # libvirt default-network NAT (when vm uses mode: nat)
     'swtpm'          # software TPM 2.0 (when libvirt.devices.tpm uses backend: emulator)
     # --- Credential surface (charly secrets) ---
-    # charly speaks the Secret Service over D-Bus through the PURE-GO
-    # zalando/go-keyring client — it does NOT link libsecret (see optdepends
-    # for the optional secret-tool CLI + pinentry-qt Secret Service support).
-    # GnuPG is the kdbx unlock + gpg-preset-passphrase path; pinentry (bundled:
-    # pinentry-qt/curses/tty) is the prompt agent secrets_gpg.go probes for.
+    # The credential store + `charly secrets` CLI are EXTERNALIZED into the
+    # bundled candy/plugin-secrets plugin (installed beside charly at
+    # /usr/lib/charly/plugins) — the PURE-GO zalando/go-keyring Secret Service
+    # client links into THAT plugin binary, not charly's core (which links no
+    # go-keyring at all). charly does NOT link libsecret (see optdepends for the
+    # optional secret-tool CLI + pinentry-qt Secret Service support). GnuPG is the
+    # gpg-preset-passphrase path; pinentry (bundled: pinentry-qt/curses/tty) is
+    # the prompt agent the plugin's GPG `.secrets` surface probes for.
     'gnupg'
     'pinentry'
 )
@@ -80,7 +83,7 @@ optdepends=(
     # deps of that OPTIONAL plugin's spice_audio build, never of this package —
     # so they are intentionally absent here.
     # --- Optional credential / debug / dev / remote-GUI tools (charly runs without them) ---
-    'libsecret: secret-tool CLI + pinentry-qt Secret Service passphrase auto-retrieval; charly itself uses the pure-Go go-keyring D-Bus client'
+    'libsecret: secret-tool CLI + pinentry-qt Secret Service passphrase auto-retrieval; the bundled plugin-secrets credential store uses the pure-Go go-keyring D-Bus client'
     'dmidecode: SMBIOS inspection inside guests when debugging VM key-injection'
     'openbsd-netcat: remote virt-manager/virt-viewer SPICE console over qemu+ssh (charly eval spice connects directly without it)'
     'go-task: provides /usr/bin/task for `task build:charly` and dev workflows from a source checkout'
@@ -121,31 +124,57 @@ pkgver() {
 build() {
     # shellcheck source=calver.sh
     source "${startdir}/calver.sh"
-    # Use pre-built binary from `task build:charly` if available (fast dev path).
-    # That binary is ALREADY stamped with main.BuildCalVer by the Taskfile, so
-    # no ldflag injection is needed here — just install it.
+
+    # The makepkg source clones COMMITTED HEAD into ${srcdir}/${pkgname}, where an UNCOMMITTED
+    # candy/plugin-secrets would be ABSENT — so the DEV plugin build must read the real WORKING
+    # tree, exactly as the charly DEV path installs the working-tree-built ${startdir}/../../bin/charly.
+    local worktree_root plugin_src
+    worktree_root="$(realpath "${startdir}/../..")"
+
     if [[ -f "${startdir}/../../bin/charly" ]]; then
+        # DEV (fast path): the pre-built working-tree charly is ALREADY stamped with
+        # main.BuildCalVer by the Taskfile — install it. Build the plugin from the working tree.
         install -Dm755 "${startdir}/../../bin/charly" "${srcdir}/charly"
-        return
+        plugin_src="${worktree_root}/candy/plugin-secrets"
+    else
+        # Standalone/AUR: build charly from the committed clone. Stamp the binary's identity
+        # (`charly version` → main.BuildCalVer) with the commit-date CalVer so it equals the
+        # pacman pkgver above (without it `charly version` would read the wall clock — useless
+        # as a build identity). The core charly carries no SPICE audio code (dep-shed into
+        # candy/plugin-spice), so it links no audio libs; CGO stays on for the Go stdlib only.
+        # Hermetic GOPATH in the build dir ONLY on this AUR path — the DEV path (above) uses the
+        # host GOPATH, so it leaves no read-only Go module cache under ${srcdir} for makepkg's
+        # post-build cleanup to choke on (`rm: Permission denied` on the 0444 module cache).
+        export GOPATH="${srcdir}/gopath"
+        local calver
+        calver=$(cd "${srcdir}/${pkgname}" && charly_calver)
+        ( cd "${srcdir}/${pkgname}/charly" \
+            && CGO_ENABLED=1 go build -trimpath -mod=readonly -ldflags "-X main.BuildCalVer=${calver}" -o "${srcdir}/charly" . )
+        plugin_src="${srcdir}/${pkgname}/candy/plugin-secrets"
     fi
-    # Standalone/AUR: build from git source. Stamp the binary's identity
-    # (`charly version` → main.BuildCalVer) with the commit-date CalVer so it
-    # equals the pacman pkgver above. Without this, `charly version` would read the
-    # wall clock at invocation time — useless as a build identity / freshness signal.
-    local calver
-    calver=$(cd "${srcdir}/${pkgname}" && charly_calver)
-    cd "${srcdir}/${pkgname}/charly"
-    export GOPATH="${srcdir}/gopath"
-    # The core charly carries no SPICE audio code: the Shells-com/spice client
-    # and its opus/portaudio cgo channels were dep-shed out of core into the
-    # out-of-tree `candy/plugin-spice` (gated behind `-tags spice_audio` THERE).
-    # So this core build links no audio libs and runs on any glibc system. CGO
-    # stays enabled only for the Go stdlib (net/os).
-    export CGO_ENABLED=1
-    go build -trimpath -mod=readonly -ldflags "-X main.BuildCalVer=${calver}" -o "${srcdir}/charly" .
+
+    # Build the EXTERNALIZED credential plugin (candy/plugin-secrets) — go-keyring + the Secret
+    # Service client + the `charly secrets` CLI + GPG `.secrets` surface live HERE, out of
+    # charly's core (the C2 dep-shed). Built STANDALONE in its own module (GOWORK=off + its
+    # `replace …/charly => ../../charly`), so a project-less HOST charly resolves verb:credential
+    # AND syscall.Exec's `charly secrets` from /usr/lib/charly/plugins without a project or toolchain.
+    ( cd "${plugin_src}" && GOWORK=off go build -trimpath -o "${srcdir}/plugin-secrets" . )
+
+    # Emit the .providers word manifest from the candy's plugin.providers declaration — the SINGLE
+    # SOURCE (the same list emitBakedPlugins bakes into in-image manifests, via the built charly's
+    # __plugin-providers introspection). NOT the gRPC Describe: C1.1 drops the CLI-served
+    # command:secrets from Describe, so a Describe-derived manifest would MISS `secrets` and break
+    # `charly secrets` project-lessly. discoverBakedPluginWords reads this at startup.
+    "${srcdir}/charly" __plugin-providers "${plugin_src}" > "${srcdir}/plugin-secrets.providers"
 }
 
 package() {
     install -Dm755 "${srcdir}/charly" "${pkgdir}/usr/bin/charly"
+    # The credential plugin + its `.providers` words manifest, beside the charly binary at the
+    # FHS plugin dir (bakedPluginDir). discoverBakedPluginWords reads the manifest at startup to
+    # register command:secrets (CLI grammar) + verb:credential (the baked store) WITHOUT
+    # connecting the plugin — the lazy connect is paid only on first use.
+    install -Dm755 "${srcdir}/plugin-secrets" "${pkgdir}/usr/lib/charly/plugins/plugin-secrets"
+    install -Dm644 "${srcdir}/plugin-secrets.providers" "${pkgdir}/usr/lib/charly/plugins/plugin-secrets.providers"
     install -Dm644 "${srcdir}/${pkgname}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

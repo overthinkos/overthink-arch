@@ -126,16 +126,16 @@ build() {
     source "${startdir}/calver.sh"
 
     # The makepkg source clones COMMITTED HEAD into ${srcdir}/${pkgname}, where an UNCOMMITTED
-    # candy/plugin-secrets would be ABSENT — so the DEV plugin build must read the real WORKING
-    # tree, exactly as the charly DEV path installs the working-tree-built ${startdir}/../../bin/charly.
-    local worktree_root plugin_src
+    # candy/plugin-* would be ABSENT — so the DEV plugin build must read the real WORKING tree,
+    # exactly as the charly DEV path installs the working-tree-built ${startdir}/../../bin/charly.
+    local worktree_root plugin_root
     worktree_root="$(realpath "${startdir}/../..")"
 
     if [[ -f "${startdir}/../../bin/charly" ]]; then
         # DEV (fast path): the pre-built working-tree charly is ALREADY stamped with
-        # main.BuildCalVer by the Taskfile — install it. Build the plugin from the working tree.
+        # main.BuildCalVer by the Taskfile — install it. Build the plugins from the working tree.
         install -Dm755 "${startdir}/../../bin/charly" "${srcdir}/charly"
-        plugin_src="${worktree_root}/candy/plugin-secrets"
+        plugin_root="${worktree_root}/candy"
     else
         # Standalone/AUR: build charly from the committed clone. Stamp the binary's identity
         # (`charly version` → main.BuildCalVer) with the commit-date CalVer so it equals the
@@ -150,31 +150,38 @@ build() {
         calver=$(cd "${srcdir}/${pkgname}" && charly_calver)
         ( cd "${srcdir}/${pkgname}/charly" \
             && CGO_ENABLED=1 go build -trimpath -mod=readonly -ldflags "-X main.BuildCalVer=${calver}" -o "${srcdir}/charly" . )
-        plugin_src="${srcdir}/${pkgname}/candy/plugin-secrets"
+        plugin_root="${srcdir}/${pkgname}/candy"
     fi
 
-    # Build the EXTERNALIZED credential plugin (candy/plugin-secrets) — go-keyring + the Secret
-    # Service client + the `charly secrets` CLI + GPG `.secrets` surface live HERE, out of
-    # charly's core (the C2 dep-shed). Built STANDALONE in its own module (GOWORK=off + its
-    # `replace …/charly => ../../charly`), so a project-less HOST charly resolves verb:credential
-    # AND syscall.Exec's `charly secrets` from /usr/lib/charly/plugins without a project or toolchain.
-    ( cd "${plugin_src}" && GOWORK=off go build -trimpath -o "${srcdir}/plugin-secrets" . )
-
-    # Emit the .providers word manifest from the candy's plugin.providers declaration — the SINGLE
-    # SOURCE (the same list emitBakedPlugins bakes into in-image manifests, via the built charly's
-    # __plugin-providers introspection). NOT the gRPC Describe: C1.1 drops the CLI-served
-    # command:secrets from Describe, so a Describe-derived manifest would MISS `secrets` and break
-    # `charly secrets` project-lessly. discoverBakedPluginWords reads this at startup.
-    "${srcdir}/charly" __plugin-providers "${plugin_src}" > "${srcdir}/plugin-secrets.providers"
+    # Build the BUNDLED EXTERNALIZED plugins beside charly at /usr/lib/charly/plugins:
+    #   - plugin-secrets — the credential store (go-keyring + Secret Service) + `charly secrets`
+    #     CLI + GPG `.secrets` surface (the C2 dep-shed).
+    #   - plugin-udev    — the `charly udev` GPU-device udev-rule manager (the first
+    #     externalizable-command precedent; a pure command-only plugin).
+    # Each is built STANDALONE in its own module (GOWORK=off + its `replace …/charly =>
+    # ../../charly`), so a project-less HOST charly resolves/syscall.Exec's its commands from
+    # /usr/lib/charly/plugins without a project or toolchain. The .providers word manifest is the
+    # SINGLE SOURCE (the same list emitBakedPlugins bakes into in-image manifests, via the built
+    # charly's __plugin-providers introspection) — NOT the gRPC Describe, which omits the
+    # CLI-served command words; discoverBakedPluginWords reads this at startup to register the
+    # command/verb words WITHOUT connecting the plugin (the lazy connect is paid only on first use).
+    local plugin
+    for plugin in plugin-secrets plugin-udev; do
+        ( cd "${plugin_root}/${plugin}" && GOWORK=off go build -trimpath -o "${srcdir}/${plugin}" . )
+        "${srcdir}/charly" __plugin-providers "${plugin_root}/${plugin}" > "${srcdir}/${plugin}.providers"
+    done
 }
 
 package() {
     install -Dm755 "${srcdir}/charly" "${pkgdir}/usr/bin/charly"
-    # The credential plugin + its `.providers` words manifest, beside the charly binary at the
-    # FHS plugin dir (bakedPluginDir). discoverBakedPluginWords reads the manifest at startup to
-    # register command:secrets (CLI grammar) + verb:credential (the baked store) WITHOUT
-    # connecting the plugin — the lazy connect is paid only on first use.
-    install -Dm755 "${srcdir}/plugin-secrets" "${pkgdir}/usr/lib/charly/plugins/plugin-secrets"
-    install -Dm644 "${srcdir}/plugin-secrets.providers" "${pkgdir}/usr/lib/charly/plugins/plugin-secrets.providers"
+    # The bundled plugins + their `.providers` words manifests, beside the charly binary at the
+    # FHS plugin dir (bakedPluginDir). discoverBakedPluginWords reads each manifest at startup to
+    # register its words — command:secrets + verb:credential (plugin-secrets), command:udev
+    # (plugin-udev) — WITHOUT connecting the plugin; the lazy connect is paid only on first use.
+    local plugin
+    for plugin in plugin-secrets plugin-udev; do
+        install -Dm755 "${srcdir}/${plugin}" "${pkgdir}/usr/lib/charly/plugins/${plugin}"
+        install -Dm644 "${srcdir}/${plugin}.providers" "${pkgdir}/usr/lib/charly/plugins/${plugin}.providers"
+    done
     install -Dm644 "${srcdir}/${pkgname}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

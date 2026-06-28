@@ -163,6 +163,10 @@ build() {
     #   - plugin-preempt — the `charly preempt` exclusive-resource lease inspector/recoverer (the
     #     second WELDED-command externalization; re-expresses each leaf as a shell-back to the
     #     in-core arbiter via the hidden `charly __preempt-status`/`__preempt-restore` verbs).
+    #   - plugin-feature — the `charly feature` plan-shaped-description inspector (list/pending/
+    #     validate; the third WELDED-command externalization; re-expresses each leaf as a
+    #     shell-back to the in-core loader + plan model via the hidden
+    #     `charly __feature-list`/`__feature-pending`/`__feature-validate` verbs).
     # Each is built STANDALONE in its own module (GOWORK=off + its `replace …/charly =>
     # ../../charly`), so a project-less HOST charly resolves/syscall.Exec's its commands from
     # /usr/lib/charly/plugins without a project or toolchain. The .providers word manifest is the
@@ -171,7 +175,7 @@ build() {
     # CLI-served command words; discoverBakedPluginWords reads this at startup to register the
     # command/verb words WITHOUT connecting the plugin (the lazy connect is paid only on first use).
     local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt; do
+    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature; do
         ( cd "${plugin_root}/${plugin}" && GOWORK=off go build -trimpath -o "${srcdir}/${plugin}" . )
         "${srcdir}/charly" __plugin-providers "${plugin_root}/${plugin}" > "${srcdir}/${plugin}.providers"
     done
@@ -185,7 +189,7 @@ package() {
     # (plugin-udev), command:tmux (plugin-tmux), command:preempt (plugin-preempt) — WITHOUT
     # connecting the plugin; the lazy connect is paid only on first use.
     local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt; do
+    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature; do
         install -Dm755 "${srcdir}/${plugin}" "${pkgdir}/usr/lib/charly/plugins/${plugin}"
         install -Dm644 "${srcdir}/${plugin}.providers" "${pkgdir}/usr/lib/charly/plugins/${plugin}.providers"
     done

@@ -167,6 +167,10 @@ build() {
     #     validate; the third WELDED-command externalization; re-expresses each leaf as a
     #     shell-back to the in-core loader + plan model via the hidden
     #     `charly __feature-list`/`__feature-pending`/`__feature-validate` verbs).
+    #   - plugin-vm      — the `charly vm` VM lifecycle CLI (the fourth WELDED-command
+    #     externalization; a DUAL verb:libvirt + command:vm plugin — command:vm raw-forwards every
+    #     arg to the hidden `charly __vm` core command, whose VmCmd Run handlers stay core). Baking
+    #     it makes `charly vm …` resolve project-less on a host with no candy source.
     # Each is built STANDALONE in its own module (GOWORK=off + its `replace …/charly =>
     # ../../charly`), so a project-less HOST charly resolves/syscall.Exec's its commands from
     # /usr/lib/charly/plugins without a project or toolchain. The .providers word manifest is the
@@ -175,7 +179,7 @@ build() {
     # CLI-served command words; discoverBakedPluginWords reads this at startup to register the
     # command/verb words WITHOUT connecting the plugin (the lazy connect is paid only on first use).
     local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature; do
+    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature plugin-vm; do
         ( cd "${plugin_root}/${plugin}" && GOWORK=off go build -trimpath -o "${srcdir}/${plugin}" . )
         "${srcdir}/charly" __plugin-providers "${plugin_root}/${plugin}" > "${srcdir}/${plugin}.providers"
     done
@@ -186,10 +190,11 @@ package() {
     # The bundled plugins + their `.providers` words manifests, beside the charly binary at the
     # FHS plugin dir (bakedPluginDir). discoverBakedPluginWords reads each manifest at startup to
     # register its words — command:secrets + verb:credential (plugin-secrets), command:udev
-    # (plugin-udev), command:tmux (plugin-tmux), command:preempt (plugin-preempt) — WITHOUT
-    # connecting the plugin; the lazy connect is paid only on first use.
+    # (plugin-udev), command:tmux (plugin-tmux), command:preempt (plugin-preempt), command:feature
+    # (plugin-feature), command:vm + verb:libvirt (plugin-vm) — WITHOUT connecting the plugin; the
+    # lazy connect is paid only on first use.
     local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature; do
+    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature plugin-vm; do
         install -Dm755 "${srcdir}/${plugin}" "${pkgdir}/usr/lib/charly/plugins/${plugin}"
         install -Dm644 "${srcdir}/${plugin}.providers" "${pkgdir}/usr/lib/charly/plugins/${plugin}.providers"
     done

@@ -160,6 +160,9 @@ build() {
     #     externalizable-command precedent; a pure command-only plugin).
     #   - plugin-tmux    — the `charly tmux` persistent-session manager (the first WELDED-command
     #     externalization; re-expresses each leaf as a `charly cmd`/`charly shell` shell-back).
+    #   - plugin-preempt — the `charly preempt` exclusive-resource lease inspector/recoverer (the
+    #     second WELDED-command externalization; re-expresses each leaf as a shell-back to the
+    #     in-core arbiter via the hidden `charly __preempt-status`/`__preempt-restore` verbs).
     # Each is built STANDALONE in its own module (GOWORK=off + its `replace …/charly =>
     # ../../charly`), so a project-less HOST charly resolves/syscall.Exec's its commands from
     # /usr/lib/charly/plugins without a project or toolchain. The .providers word manifest is the
@@ -168,7 +171,7 @@ build() {
     # CLI-served command words; discoverBakedPluginWords reads this at startup to register the
     # command/verb words WITHOUT connecting the plugin (the lazy connect is paid only on first use).
     local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux; do
+    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt; do
         ( cd "${plugin_root}/${plugin}" && GOWORK=off go build -trimpath -o "${srcdir}/${plugin}" . )
         "${srcdir}/charly" __plugin-providers "${plugin_root}/${plugin}" > "${srcdir}/${plugin}.providers"
     done
@@ -179,10 +182,10 @@ package() {
     # The bundled plugins + their `.providers` words manifests, beside the charly binary at the
     # FHS plugin dir (bakedPluginDir). discoverBakedPluginWords reads each manifest at startup to
     # register its words — command:secrets + verb:credential (plugin-secrets), command:udev
-    # (plugin-udev), command:tmux (plugin-tmux) — WITHOUT connecting the plugin; the lazy connect
-    # is paid only on first use.
+    # (plugin-udev), command:tmux (plugin-tmux), command:preempt (plugin-preempt) — WITHOUT
+    # connecting the plugin; the lazy connect is paid only on first use.
     local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux; do
+    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt; do
         install -Dm755 "${srcdir}/${plugin}" "${pkgdir}/usr/lib/charly/plugins/${plugin}"
         install -Dm644 "${srcdir}/${plugin}.providers" "${pkgdir}/usr/lib/charly/plugins/${plugin}.providers"
     done

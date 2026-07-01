@@ -189,15 +189,22 @@ build() {
     # Each is built STANDALONE in its own module (GOWORK=off + its `replace …/charly =>
     # ../../charly`), so a project-less HOST charly resolves/syscall.Exec's its commands from
     # /usr/lib/charly/plugins without a project or toolchain. The .providers word manifest is the
-    # SINGLE SOURCE (the same list emitBakedPlugins bakes into in-image manifests, via the built
-    # charly's __plugin-providers introspection) — NOT the gRPC Describe, which omits the
-    # CLI-served command words; discoverBakedPluginWords reads this at startup to register the
+    # SINGLE SOURCE for the WORDS (the same list emitBakedPlugins bakes into in-image manifests,
+    # via the built charly's __plugin-providers introspection) — NOT the gRPC Describe, which omits
+    # the CLI-served command words; discoverBakedPluginWords reads this at startup to register the
     # command/verb words WITHOUT connecting the plugin (the lazy connect is paid only on first use).
-    local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature plugin-vm plugin-doctor plugin-clean plugin-settings plugin-candy; do
+    #
+    # The plugin SET is the SINGLE SOURCE pkg/host-command-plugins.txt (R3) — the SAME list the
+    # fedora .rpm / debian .deb localpkg build_templates read, so the three package builders can
+    # never drift. It sits beside candy/ in the superproject (the working tree on the DEV path, the
+    # git clone on standalone/AUR), so it resolves as plugin_root's parent whichever path set it.
+    local plugins_list plugin
+    plugins_list="${plugin_root%/candy}/pkg/host-command-plugins.txt"
+    while read -r plugin; do
+        case "${plugin}" in ''|\#*) continue ;; esac
         ( cd "${plugin_root}/${plugin}" && GOWORK=off go build -trimpath -o "${srcdir}/${plugin}" . )
         "${srcdir}/charly" __plugin-providers "${plugin_root}/${plugin}" > "${srcdir}/${plugin}.providers"
-    done
+    done < "${plugins_list}"
 }
 
 package() {
@@ -209,10 +216,15 @@ package() {
     # (plugin-feature), command:vm + verb:libvirt (plugin-vm), command:doctor (plugin-doctor),
     # command:clean (plugin-clean), command:settings (plugin-settings), command:candy (plugin-candy)
     # — WITHOUT connecting the plugin; the lazy connect is paid only on first use.
-    local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature plugin-vm plugin-doctor plugin-clean plugin-settings plugin-candy; do
+    # Install exactly what build() staged: each plugin binary + its `.providers` word
+    # manifest. The staged `${srcdir}/*.providers` set IS the single handoff between
+    # build() and package(), so the plugin list is read once (in build(), from
+    # pkg/host-command-plugins.txt) and never duplicated here.
+    local pf plugin
+    for pf in "${srcdir}"/*.providers; do
+        plugin="$(basename "${pf}" .providers)"
         install -Dm755 "${srcdir}/${plugin}" "${pkgdir}/usr/lib/charly/plugins/${plugin}"
-        install -Dm644 "${srcdir}/${plugin}.providers" "${pkgdir}/usr/lib/charly/plugins/${plugin}.providers"
+        install -Dm644 "${pf}" "${pkgdir}/usr/lib/charly/plugins/${plugin}.providers"
     done
     install -Dm644 "${srcdir}/${pkgname}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

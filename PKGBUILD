@@ -1,6 +1,6 @@
 # Maintainer: Andreas Trawoeger <atrawog@opencharly.ai>
 pkgname=opencharly-git
-pkgver=2026.181.2245
+pkgver=2026.182.0002
 pkgrel=1
 pkgdesc="OpenCharly container management CLI — compose, build, deploy container boxes from configurable candies"
 arch=('x86_64')
@@ -176,6 +176,16 @@ build() {
     #     `charly __doctor` core command, whose DoctorCmd.Run handler stays core — it calls the
     #     package-main host-detection symbols credentialHealth / DetectGPU / DetectVFIO that cannot
     #     cross the process boundary). Baking it makes `charly doctor` resolve project-less.
+    #   - plugin-clean / plugin-settings / plugin-candy — three of cutover C15's remaining
+    #     WELDED-command externalizations. Each raw-forwards every arg to its hidden core command
+    #     (`charly __clean`/`__settings`/`__candy`), whose Run handler stays core: CleanCmd reads
+    #     charly.yml defaults + ResolveRuntime + prunes .build/.check/podman tags; SettingsCmd
+    #     reads/writes ~/.config/charly/config.yml + the credential store; CandyCmd mutates
+    #     candy/<name>/charly.yml via the yaml.v3 Node API + traversal guard. settings/candy are
+    #     command TREES (kong passthrough forwards every subcommand); clean is a flags-only leaf.
+    #     Baking them makes `charly clean`/`settings`/`candy` resolve project-less. NOTE: `charly
+    #     version` is DELIBERATELY NOT externalized — pkgver() (below) stamps the package version via
+    #     `bin/charly version`, so version must stay a core command (unfixable chicken-and-egg).
     # Each is built STANDALONE in its own module (GOWORK=off + its `replace …/charly =>
     # ../../charly`), so a project-less HOST charly resolves/syscall.Exec's its commands from
     # /usr/lib/charly/plugins without a project or toolchain. The .providers word manifest is the
@@ -184,7 +194,7 @@ build() {
     # CLI-served command words; discoverBakedPluginWords reads this at startup to register the
     # command/verb words WITHOUT connecting the plugin (the lazy connect is paid only on first use).
     local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature plugin-vm plugin-doctor; do
+    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature plugin-vm plugin-doctor plugin-clean plugin-settings plugin-candy; do
         ( cd "${plugin_root}/${plugin}" && GOWORK=off go build -trimpath -o "${srcdir}/${plugin}" . )
         "${srcdir}/charly" __plugin-providers "${plugin_root}/${plugin}" > "${srcdir}/${plugin}.providers"
     done
@@ -196,10 +206,11 @@ package() {
     # FHS plugin dir (bakedPluginDir). discoverBakedPluginWords reads each manifest at startup to
     # register its words — command:secrets + verb:credential (plugin-secrets), command:udev
     # (plugin-udev), command:tmux (plugin-tmux), command:preempt (plugin-preempt), command:feature
-    # (plugin-feature), command:vm + verb:libvirt (plugin-vm), command:doctor (plugin-doctor) —
-    # WITHOUT connecting the plugin; the lazy connect is paid only on first use.
+    # (plugin-feature), command:vm + verb:libvirt (plugin-vm), command:doctor (plugin-doctor),
+    # command:clean (plugin-clean), command:settings (plugin-settings), command:candy (plugin-candy)
+    # — WITHOUT connecting the plugin; the lazy connect is paid only on first use.
     local plugin
-    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature plugin-vm plugin-doctor; do
+    for plugin in plugin-secrets plugin-udev plugin-tmux plugin-preempt plugin-feature plugin-vm plugin-doctor plugin-clean plugin-settings plugin-candy; do
         install -Dm755 "${srcdir}/${plugin}" "${pkgdir}/usr/lib/charly/plugins/${plugin}"
         install -Dm644 "${srcdir}/${plugin}.providers" "${pkgdir}/usr/lib/charly/plugins/${plugin}.providers"
     done
